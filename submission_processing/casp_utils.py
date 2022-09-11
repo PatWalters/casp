@@ -140,7 +140,7 @@ def get_close_residues(prot, lig, dist_cutoff=3):
     """
     combo_atmgrp = prot + lig
     close_atmgrp = combo_atmgrp.select(f"protein and within {dist_cutoff} of resname LIG")
-    close_res = None
+    close_res = set()
     if close_atmgrp:
         close_res = set(close_atmgrp.getResnums())
     return close_res

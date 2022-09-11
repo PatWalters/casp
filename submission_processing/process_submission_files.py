@@ -14,6 +14,7 @@ import numpy as np
 from prody import confProDy
 from pathlib import Path
 from tqdm.auto import tqdm
+import json
 
 home = str(Path.home())
 LIGAND_DIR = f"/{home}/DATA/CASP/FINAL/LIGAND"
@@ -159,8 +160,8 @@ def find_close_residues(mol, protein_ag):
             ligand_atmgrp_ok = True
             close_res_3 = get_close_residues(protein_ag, mol_ag, 3.0)
             close_res_5 = get_close_residues(protein_ag, mol_ag, 5.0)
-            close_str_3 = archive_set(close_res_3)
-            close_str_5 = archive_set(close_res_5)
+            close_str_3 = json.dumps([int(x) for x in close_res_3])
+            close_str_5 = json.dumps([int(x) for x in close_res_5])
     return ligand_atmgrp_ok, close_str_3, close_str_5
 
 
@@ -188,7 +189,7 @@ def process_submission_file(filename, ligand_info, find_interactions=False):
 
             smiles, name_out, relevant, mf = None, None, None, None
             bonds_ok, mol_smiles, ligand_atmgrp_ok = None, None, None
-            close_str_3, close_str_5 = None, None
+            close_3, close_5 = None, None
             mf, hvy_mf, ref_hvy_mf, hvy_mf_ok = None, None, None, None
 
             if mol:
@@ -203,7 +204,7 @@ def process_submission_file(filename, ligand_info, find_interactions=False):
                     hvy_mf_ok = hvy_mf == ref_hvy_mf
                 # bonds_ok = check_ligand_bonds(mol,smiles)
                 if find_interactions:
-                    ligand_atmgrp_ok, close_str_3, close_str_5 = find_close_residues(mol, protein_ag)
+                    ligand_atmgrp_ok, close_3, close_5 = find_close_residues(mol, protein_ag)
             ligand_res.append(
                 [num_model_lines, pose_id, pose_number,
                  model_ligand_id, model_ligand_name, model_ligand_number,
@@ -211,7 +212,7 @@ def process_submission_file(filename, ligand_info, find_interactions=False):
                  mf, hvy_mf, ref_hvy_mf, hvy_mf_ok,
                  mol_smiles, smiles,
                  bad_mol, bad_protein, mol_status, bonds_ok, ligand_atmgrp_ok, len_protein, protein_atmgrp_ok,
-                 close_str_3, close_str_5])
+                 close_3, close_5])
     return ligand_res
 
 
@@ -237,7 +238,7 @@ def process_ligands():
             "mol_zmiles", "zmiles",
             "bad_ligand", "bad_protein", "mol_status", "bonds_ok", "ligand_atmgrp_ok", "len_protein",
             "protein_atmgrp_ok",
-            "close_str_3", "close_str_5"]
+            "close_3", "close_5"]
     for dirpath in glob(f"{SUBMISSION_DIR}/*"):
         base_name, target_name = os.path.split(dirpath)
         ligand_file = base_name.replace("SUBMISSIONS", "LIGAND") + f"/{target_name}_lig.txt"
