@@ -4,7 +4,7 @@ from io import StringIO
 from pathlib import PurePath
 
 import pandas as pd
-from prody import parsePDBStream, confProDy
+from prody import parsePDBStream, confProDy, writePDBStream
 from rdkit import Chem
 from tqdm.auto import tqdm
 from glob import glob
@@ -47,6 +47,13 @@ def read_submission_file(submission_file):
 
 
 # ================ Prody functions =======================
+
+def atomgroup_to_rdmol(ag):
+    buff = StringIO()
+    writePDBStream(buff, ag)
+    mol = Chem.MolFromPDBBlock(buff.getvalue())
+    return mol
+
 
 def pdb_str_to_atomgroup(pdb_str):
     """ Read a pdb file as a string and covert it to a Prody AtomGroup

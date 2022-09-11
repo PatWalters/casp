@@ -245,7 +245,7 @@ def process_ligands():
         sub_file_list = sorted(glob(dirpath + f"/{target_name}*"))
         for sub_filepath in tqdm(sub_file_list, desc=dirpath):
             data_path, sub_filename = os.path.split(sub_filepath)
-            row_df = pd.DataFrame(process_submission_file(sub_filepath, lig_info, find_interactions=False),
+            row_df = pd.DataFrame(process_submission_file(sub_filepath, lig_info, find_interactions=True),
                                   columns=cols)
             row_df['target'] = target_name
             row_df['submission'] = sub_filename
