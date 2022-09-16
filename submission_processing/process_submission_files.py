@@ -15,6 +15,7 @@ from prody import confProDy
 from pathlib import Path
 from tqdm.auto import tqdm
 import json
+from read_rotation_matrices import build_rotation_dataaframe
 
 home = str(Path.home())
 LIGAND_DIR = f"/{home}/DATA/CASP/FINAL/LIGAND"
@@ -92,7 +93,6 @@ class LigandInfo:
             name = name.upper()
             ret_val = (smiles, name, relevant, hvy_mf)
         return ret_val
-
 
     def get_df(self):
         return self.ligand_df
@@ -191,6 +191,7 @@ def process_submission_file(filename, ligand_info, find_interactions=False):
             bonds_ok, mol_smiles, ligand_atmgrp_ok = None, None, None
             close_3, close_5 = None, None
             mf, hvy_mf, ref_hvy_mf, hvy_mf_ok = None, None, None, None
+            mol_block = None
 
             if mol:
                 mf = CalcMolFormula(mol)
@@ -203,6 +204,7 @@ def process_submission_file(filename, ligand_info, find_interactions=False):
                         model_ligand_name)
                     hvy_mf_ok = hvy_mf == ref_hvy_mf
                 # bonds_ok = check_ligand_bonds(mol,smiles)
+                mol_block = Chem.MolToMolBlock(mol)
                 if find_interactions:
                     ligand_atmgrp_ok, close_3, close_5 = find_close_residues(mol, protein_ag)
             ligand_res.append(
@@ -212,7 +214,7 @@ def process_submission_file(filename, ligand_info, find_interactions=False):
                  mf, hvy_mf, ref_hvy_mf, hvy_mf_ok,
                  mol_smiles, smiles,
                  bad_mol, bad_protein, mol_status, bonds_ok, ligand_atmgrp_ok, len_protein, protein_atmgrp_ok,
-                 close_3, close_5])
+                 close_3, close_5, mol_block])
     return ligand_res
 
 
@@ -228,7 +230,21 @@ def process_protein(find_interactions, submission_results):
     return bad_protein, len_protein, protein_ag, protein_atmgrp_ok
 
 
+def get_rotation_matrix(submission, rot_df):
+    rot_id = submission.replace("LG", "TS")
+    #sel_df = rot_df.query("name == @rot_id")
+    try:
+        sel_df = rot_df[submission]
+        rot_mat = sel_df.tm.values[0]
+        res = json.dumps(rot_mat.tolist())
+    except KeyError as e:
+        res = None
+    return res
+
+
 def process_ligands():
+    rotation_df = build_rotation_dataaframe()
+    rotation_df.set_index("name",inplace=True)
     df_list = []
 
     cols = ["num_model_lines", "pose_id", "pose_num",
@@ -238,7 +254,7 @@ def process_ligands():
             "mol_zmiles", "zmiles",
             "bad_ligand", "bad_protein", "mol_status", "bonds_ok", "ligand_atmgrp_ok", "len_protein",
             "protein_atmgrp_ok",
-            "close_3", "close_5"]
+            "close_3", "close_5", "mol_block"]
     for dirpath in glob(f"{SUBMISSION_DIR}/*"):
         base_name, target_name = os.path.split(dirpath)
         ligand_file = base_name.replace("SUBMISSIONS", "LIGAND") + f"/{target_name}_lig.txt"
@@ -246,16 +262,17 @@ def process_ligands():
         sub_file_list = sorted(glob(dirpath + f"/{target_name}*"))
         for sub_filepath in tqdm(sub_file_list, desc=dirpath):
             data_path, sub_filename = os.path.split(sub_filepath)
-            row_df = pd.DataFrame(process_submission_file(sub_filepath, lig_info, find_interactions=True),
+            row_df = pd.DataFrame(process_submission_file(sub_filepath, lig_info, find_interactions=False),
                                   columns=cols)
             row_df['target'] = target_name
             row_df['submission'] = sub_filename
+            row_df['rotation_matrix'] = get_rotation_matrix(sub_filename, rotation_df)
             df_list.append(row_df)
-    combo_df = pd.concat(df_list)
-    group_re = re.compile("LG([0-9]+)_")
-    combo_df['group'] = [group_re.findall(x)[0] for x in combo_df.submission.values]
-    combo_df.to_csv("casp_ligands.csv", index=False)
-    # return combo_df
+            combo_df = pd.concat(df_list)
+            group_re = re.compile("LG([0-9]+)_")
+            combo_df['group'] = [group_re.findall(x)[0] for x in combo_df.submission.values]
+            combo_df.to_csv("casp_ligands_with_mols.csv", index=False)
+            # return combo_df
 
 
 def debug():
@@ -275,5 +292,5 @@ def debug():
 
 
 if __name__ == "__main__":
-    #debug()
+    # debug()
     process_ligands()

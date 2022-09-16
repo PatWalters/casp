@@ -11,6 +11,9 @@ import pandas as pd
 from tqdm.auto import tqdm
 import prody
 from rdkit.Chem.rdMolDescriptors import CalcMolFormula
+from rdkit import Chem
+from rdkit.Chem import AllChem
+import useful_rdkit_utils as uru
 
 home = str(Path.home())
 LIGAND_DIR = f"{home}/DATA/CASP/FINAL/LIGAND"
@@ -18,14 +21,25 @@ SUBMISSION_DIR = f"{home}/DATA/CASP/FINAL/SUBMISSIONS"
 SOLUTIONS_DIR = f"{home}/DATA/CASP/FINAL/SOLUTIONS"
 
 
-def get_ligand_mol_formula(atmgrp, chid, resname, resnum):
+def find_close_residues(prot, chid, resnum, resname, cutoff):
+    query_str = f"(protein or nucleic) within {cutoff} of (chid {chid} resnum {resnum} resname {resname})"
+    prot.select(query_str)
+    sel = prot.select(query_str)
+    sel_atomnum_set = []
+    if sel:
+        sel_atomnum_set = list(set(sel.getResnums()))
+    return [int(x) for x in sel_atomnum_set]
+
+
+def get_ligand_rdmol(atmgrp, chid, resname, resnum):
     query_str = f"(chid is {chid}) and (resname is {resname}) and (resnum is {resnum})"
     sel_ag = atmgrp.select(query_str)
     sel_mol = atomgroup_to_rdmol(sel_ag)
-    return CalcMolFormula(sel_mol)
+    return sel_mol
 
 
 def process_ref_protein(filename):
+    uru.rd_shut_the_hell_up()
     prot_ag = prody.parsePDB(filename)
     basename = PurePath(filename).parts[-1]
     ligand_filename = basename.replace(".pdb", ".txt")
@@ -37,16 +51,28 @@ def process_ref_protein(filename):
     prot = ppdb.read_pdb(filename)
     res = []
     df_list = []
-    for k, v in prot.df['HETATM'].groupby("chain_id"):
+    for chain_id, v in prot.df['HETATM'].groupby("chain_id"):
         for row in v[['residue_name', 'residue_number']].drop_duplicates().values:
             res_name, res_num = row
             if res_name in lig_name_set:
                 ref_smiles, ref_name, res_relevant, ref_hvy_mf = lig_info.lookup_ligand_info_by_name(res_name)
-                pdb_mf = get_ligand_mol_formula(prot_ag, k, res_name, res_num)
-                pdb_hvy_mf = heavy_atom_mf(pdb_mf)
-                res.append([k, res_name, res_num, ref_smiles, ref_hvy_mf, pdb_hvy_mf])
+                ligand_rd_mol = get_ligand_rdmol(prot_ag, chain_id, res_name, res_num)
+                ligand_mf = CalcMolFormula(ligand_rd_mol)
+                ref_mol = Chem.MolFromSmiles(ref_smiles)
+                if ref_mol.GetNumBonds() > 0:
+                    try:
+                        AllChem.AssignBondOrdersFromTemplate(ref_mol, ligand_rd_mol)
+                    except ValueError as e:
+                        print(e, ref_smiles)
+                ligand_mol_block = Chem.MolToMolBlock(ligand_rd_mol)
+                pdb_hvy_mf = heavy_atom_mf(ligand_mf)
+                close_3 = find_close_residues(prot_ag, chain_id, res_num, res_name, 3.0)
+                close_5 = find_close_residues(prot_ag, chain_id, res_num, res_name, 5.0)
+                res.append([chain_id, res_name, res_num, ref_smiles, ref_hvy_mf, pdb_hvy_mf, ligand_mol_block, close_3,
+                            close_5])
 
-    ref_df = pd.DataFrame(res, columns=["chain", "res_name", "res_num", "ref_smiles", "ref_hvy_mf", "pdb_hvy_mf"])
+    ref_df = pd.DataFrame(res, columns=["chain", "res_name", "res_num", "ref_smiles", "ref_hvy_mf", "pdb_hvy_mf",
+                                        "ligand_mol_block", "close_3", "close_5"])
     ref_df['mf_ok'] = ref_df.ref_hvy_mf == ref_df.pdb_hvy_mf
     ref_df['target'] = basename
     ref_counter = sorted(Counter(ref_df.res_name.values).items())

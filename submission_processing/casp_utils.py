@@ -8,6 +8,7 @@ from prody import parsePDBStream, confProDy, writePDBStream
 from rdkit import Chem
 from tqdm.auto import tqdm
 from glob import glob
+from pathlib import Path
 
 
 def read_submission_file(submission_file):
@@ -244,5 +245,13 @@ def main():
     all_df[out_columns].to_csv("T1124_report.csv", index=False)
 
 
+def debug_entry(name):
+    home = str(Path.home())
+    SUBMISSION_DIR = f"{home}/DATA/CASP/FINAL/SUBMISSIONS"
+    base_dir = name.split("LG")[0]
+    entry = read_submission_file(f"{SUBMISSION_DIR}/{base_dir}/{name}")
+    write_entry(entry,name)
+
+
 if __name__ == "__main__":
-    main()
+    debug_entry("H1172LG035_3")
