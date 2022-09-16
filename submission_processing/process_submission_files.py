@@ -266,7 +266,6 @@ def process_ligands():
             row_df['target'] = target_name
             row_df['submission'] = sub_filename
             rmat = get_rotation_matrix(sub_filename, rotation_df)
-            print(rmat)
             row_df['rotation_matrix'] = rmat
             df_list.append(row_df)
             combo_df = pd.concat(df_list)
