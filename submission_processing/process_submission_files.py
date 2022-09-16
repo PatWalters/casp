@@ -232,12 +232,11 @@ def process_protein(find_interactions, submission_results):
 
 def get_rotation_matrix(submission, rot_df):
     rot_id = submission.replace("LG", "TS")
-    #sel_df = rot_df.query("name == @rot_id")
-    try:
-        sel_df = rot_df[submission]
+    sel_df = rot_df.query("name == @rot_id")
+    if len(sel_df) > 0:
         rot_mat = sel_df.tm.values[0]
         res = json.dumps(rot_mat.tolist())
-    except KeyError as e:
+    else:
         res = None
     return res
 
@@ -255,7 +254,7 @@ def process_ligands():
             "bad_ligand", "bad_protein", "mol_status", "bonds_ok", "ligand_atmgrp_ok", "len_protein",
             "protein_atmgrp_ok",
             "close_3", "close_5", "mol_block"]
-    for dirpath in glob(f"{SUBMISSION_DIR}/*"):
+    for dirpath in glob(f"{SUBMISSION_DIR}/T1187*"):
         base_name, target_name = os.path.split(dirpath)
         ligand_file = base_name.replace("SUBMISSIONS", "LIGAND") + f"/{target_name}_lig.txt"
         lig_info = LigandInfo(ligand_file)
@@ -266,7 +265,9 @@ def process_ligands():
                                   columns=cols)
             row_df['target'] = target_name
             row_df['submission'] = sub_filename
-            row_df['rotation_matrix'] = get_rotation_matrix(sub_filename, rotation_df)
+            rmat = get_rotation_matrix(sub_filename, rotation_df)
+            print(rmat)
+            row_df['rotation_matrix'] = rmat
             df_list.append(row_df)
             combo_df = pd.concat(df_list)
             group_re = re.compile("LG([0-9]+)_")
