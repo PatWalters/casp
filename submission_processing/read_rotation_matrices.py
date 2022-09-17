@@ -62,7 +62,7 @@ def read_mmalign_matrix_files(dirname):
 
 def build_rotation_dataaframe():
     df_list = []
-    for filename in glob(f"{ROTATION_DIR}/*.rot"):
+    for filename in sorted(glob(f"{ROTATION_DIR}/*.rot")):
         basename = PurePath(filename).parts[-1]
         target = basename.replace(".rot", "")
         df = read_lga_matrix_file(filename)
@@ -88,3 +88,4 @@ def test_rotation_dataframe():
 
 if __name__ == "__main__":
     test_rotation_dataframe()
+

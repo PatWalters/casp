@@ -61,7 +61,8 @@ def process_ref_protein(filename):
                 ref_mol = Chem.MolFromSmiles(ref_smiles)
                 if ref_mol.GetNumBonds() > 0:
                     try:
-                        AllChem.AssignBondOrdersFromTemplate(ref_mol, ligand_rd_mol)
+                        tmp_mol = AllChem.AssignBondOrdersFromTemplate(ref_mol, ligand_rd_mol)
+                        ligand_rd_mol = tmp_mol
                     except ValueError as e:
                         print(e, ref_smiles)
                 ligand_mol_block = Chem.MolToMolBlock(ligand_rd_mol)
@@ -74,7 +75,8 @@ def process_ref_protein(filename):
     ref_df = pd.DataFrame(res, columns=["chain", "res_name", "res_num", "ref_smiles", "ref_hvy_mf", "pdb_hvy_mf",
                                         "ligand_mol_block", "close_3", "close_5"])
     ref_df['mf_ok'] = ref_df.ref_hvy_mf == ref_df.pdb_hvy_mf
-    ref_df['target'] = basename
+    ref_df['target_pdb'] = basename
+    ref_df['target'] = basename.replace("_lig.pdb", "")
     ref_counter = sorted(Counter(ref_df.res_name.values).items())
     lig_counter = sorted(Counter(lig_df.Name.values).items())
     match = str(ref_counter) == str(lig_counter)

@@ -254,7 +254,7 @@ def process_ligands():
             "bad_ligand", "bad_protein", "mol_status", "bonds_ok", "ligand_atmgrp_ok", "len_protein",
             "protein_atmgrp_ok",
             "close_3", "close_5", "mol_block"]
-    for dirpath in glob(f"{SUBMISSION_DIR}/T1187*"):
+    for dirpath in glob(f"{SUBMISSION_DIR}/R1126*"):
         base_name, target_name = os.path.split(dirpath)
         ligand_file = base_name.replace("SUBMISSIONS", "LIGAND") + f"/{target_name}_lig.txt"
         lig_info = LigandInfo(ligand_file)
