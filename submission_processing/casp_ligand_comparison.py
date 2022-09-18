@@ -12,6 +12,34 @@ from rdkit.Chem import AllChem
 from rdkit.Chem.MolStandardize import rdMolStandardize
 import numpy as np
 import useful_rdkit_utils as uru
+from spyrmsd import rmsd, molecule
+from spyrmsd.optional import rdkit as rd
+from spyrmsd.exceptions import NonIsomorphicGraphs
+
+MAX_RMSD = 10000.0
+
+
+def spyrmsd(rd_mol, rd_ref):
+    mol = rd.to_molecule(rd_mol)
+    coords = mol.coordinates
+    anum = mol.atomicnums
+    adj = mol.adjacency_matrix
+
+    ref = rd.to_molecule(rd_ref)
+    coords_ref = ref.coordinates
+    anum_ref = ref.atomicnums
+    adj_ref = ref.adjacency_matrix
+
+    rmsd_val = rmsd.symmrmsd(
+        coords_ref,
+        coords,
+        anum_ref,
+        anum,
+        adj_ref,
+        adj,
+        minimize=False,
+    )
+    return rmsd_val
 
 
 def tanimoto(set_a, set_b):
@@ -64,7 +92,6 @@ def transform_molecule(mol, tm):
         conf.SetAtomPosition(i, Point3D(x_new, y_new, z_new))
 
 
-
 def best_featuremap_score(mol, ref_mol_list, featuremap_score):
     best_fms = -1
     for ref_mol in ref_mol_list:
@@ -83,11 +110,38 @@ def single_atom_rmsd(m1, m2):
     return rmsd
 
 
+def best_shape_tanimoto(mol, ref_mol_list):
+    best_score = 1.1
+    writer = Chem.SDWriter("test.sdf")
+    writer.write(mol)
+    writer.write(ref_mol_list[0])
+    writer.close()
+    for ref_mol in ref_mol_list:
+        shape_tan = AllChem.ShapeTanimotoDist(mol, ref_mol)
+        best_score = min(best_score, shape_tan)
+    return best_score
+
+
 def best_rms(mol, ref_mol_list):
+    best_rms_val = MAX_RMSD
+    for ref_mol in ref_mol_list:
+        rms_val = spyrmsd(mol, ref_mol)
+        best_rms_val = min(best_rms_val, rms_val)
+    return best_rms_val
+
+
+def xbest_rms(mol, ref_mol_list):
     uncharger = rdMolStandardize.Uncharger()
     mol = uncharger.uncharge(mol)
-    best_rms_val = 100000000.0
+    best_rms_val = MAX_RMSD
     for ref_mol in ref_mol_list:
+        if ref_mol.GetNumAtoms() != mol.GetNumAtoms():
+            mol = Chem.RWMol(mol)
+            match_set = set(mol.GetSubstructMatch(ref_mol))
+            all_set = set(list(range(0, mol.GetNumAtoms())))
+            for idx in sorted(list(all_set.difference(match_set)), reverse=True):
+                mol.RemoveAtom(idx)
+            Chem.SanitizeMol(mol)
         try:
             mol = AllChem.AssignBondOrdersFromTemplate(ref_mol, mol)
             if mol.GetNumAtoms() == 1:
@@ -112,6 +166,7 @@ def evaluate_ligand_overlap(protein_df, ligand_df):
         prot_lig_dict[prot_lig_name] = [uncharger.uncharge(Chem.MolFromMolBlock(x)) for x in prot_mol_block_list]
     fms_list = []
     rms_list = []
+    shape_tanimoto_list = []
     for idx, ligand_rec in tqdm(ligand_df.iterrows(), total=len(ligand_df)):
         ligand_name = ligand_rec.corrected_name
         try:
@@ -122,31 +177,45 @@ def evaluate_ligand_overlap(protein_df, ligand_df):
             transform_molecule(ligand_mol, rmat)
             best_fms_val = best_featuremap_score(ligand_mol, ref_mol_list, featuremap_score)
             best_rms_val = best_rms(ligand_mol, ref_mol_list)
-        except (TypeError, KeyError) as e:
+            best_shape_score = best_shape_tanimoto(ligand_mol, ref_mol_list)
+        except (TypeError, KeyError, AssertionError, NonIsomorphicGraphs) as e:
             best_fms_val = -1.0
-            best_rms_val = 100000000.0
-
-
+            best_rms_val = MAX_RMSD
+            best_shape_score = -1.0
+        shape_tanimoto_list.append(best_shape_score)
         fms_list.append(best_fms_val)
         rms_list.append(best_rms_val)
-    print(max(fms_list), min(rms_list))
+    return shape_tanimoto_list, fms_list, rms_list
 
 
 def main():
     protein_ref_df = pd.read_csv("proteins_ok.csv")
-    ligand_df = pd.read_csv("2022_09_16_casp_ligads_with_mols.csv")
+    ligand_df = pd.read_csv("2022_09_17_casp_ligands_with_mols.csv")
     protein_target_list = protein_ref_df.target.unique()
 
+    df_list = []
     for target in ligand_df.target.unique():
-        df_ligand = ligand_df.query("target == @target")
+        df_ligand = ligand_df.query("target == @target").copy()
+        # df_ligand = ligand_df.query("submission == @submission_id and pose_num == 1").copy()
         target_protein_list = [x for x in protein_target_list if x.startswith(target)]
         for tp in target_protein_list:
             df_protein = protein_ref_df.query("target == @tp")
             print(tp, len(df_ligand), len(df_protein))
-        # close_3_list = evaluate_site_overlap(df_protein, df_ligand, "close_3")
-        # close_5_list = evaluate_site_overlap(df_protein, df_ligand, "close_5")
-        # print(target, len(df_ligand), len(close_3_list), len(close_5_list))
-            evaluate_ligand_overlap(df_protein, df_ligand)
+            close_3_list = evaluate_site_overlap(df_protein, df_ligand, "close_3")
+            close_5_list = evaluate_site_overlap(df_protein, df_ligand, "close_5")
+            # print(target, len(df_ligand), len(close_3_list), len(close_5_list))
+            # rms_list, fms_list = evaluate_ligand_overlap(df_protein, df_ligand)
+            shape_tanimoto_list, fms_list, rms_list = evaluate_ligand_overlap(df_protein, df_ligand)
+            df_ligand['ref_protein'] = tp
+            df_ligand['close_3'] = close_3_list
+            df_ligand['close_5'] = close_5_list
+            df_ligand['shape_tanimoto'] = shape_tanimoto_list
+            df_ligand['rmsd'] = rms_list
+            df_ligand['fms'] = fms_list
+        df_list.append(df_ligand)
+    combo_df = pd.concat(df_list)
+    combo_df.to_csv("zcasp_ligand_eval.csv", index=False)
 
 
-main()
+if __name__ == "__main__":
+    main()

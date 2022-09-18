@@ -195,6 +195,7 @@ def process_submission_file(filename, ligand_info, find_interactions=False):
 
             if mol:
                 mf = CalcMolFormula(mol)
+                num_atoms = mol.GetNumAtoms()
                 hvy_mf = heavy_atom_mf(mf)
                 mol_smiles = Chem.MolToSmiles(mol)
                 smiles, name_out, relevant, ref_hvy_mf = ligand_info.lookup_ligand_info_by_number(model_ligand_number)
@@ -214,7 +215,7 @@ def process_submission_file(filename, ligand_info, find_interactions=False):
                  mf, hvy_mf, ref_hvy_mf, hvy_mf_ok,
                  mol_smiles, smiles,
                  bad_mol, bad_protein, mol_status, bonds_ok, ligand_atmgrp_ok, len_protein, protein_atmgrp_ok,
-                 close_3, close_5, mol_block])
+                 close_3, close_5, mol_block, num_atoms])
     return ligand_res
 
 
@@ -253,8 +254,8 @@ def process_ligands():
             "mol_zmiles", "zmiles",
             "bad_ligand", "bad_protein", "mol_status", "bonds_ok", "ligand_atmgrp_ok", "len_protein",
             "protein_atmgrp_ok",
-            "close_3", "close_5", "mol_block"]
-    for dirpath in glob(f"{SUBMISSION_DIR}/R1126*"):
+            "close_3", "close_5", "mol_block","num_atoms"]
+    for dirpath in glob(f"{SUBMISSION_DIR}/*"):
         base_name, target_name = os.path.split(dirpath)
         ligand_file = base_name.replace("SUBMISSIONS", "LIGAND") + f"/{target_name}_lig.txt"
         lig_info = LigandInfo(ligand_file)
