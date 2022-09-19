@@ -190,7 +190,7 @@ def evaluate_ligand_overlap(protein_df, ligand_df):
 
 def main():
     protein_ref_df = pd.read_csv("proteins_ok.csv")
-    ligand_df = pd.read_csv("2022_09_17_casp_ligands_with_mols.csv")
+    ligand_df = pd.read_csv("2022_09_18_casp_ligands_with_mols.csv")
     protein_target_list = protein_ref_df.target.unique()
 
     df_list = []
@@ -214,7 +214,7 @@ def main():
             df_ligand['fms'] = fms_list
         df_list.append(df_ligand)
     combo_df = pd.concat(df_list)
-    combo_df.to_csv("zcasp_ligand_eval.csv", index=False)
+    combo_df.to_csv("2022_09_18_casp_ligand_eval.csv", index=False)
 
 
 if __name__ == "__main__":

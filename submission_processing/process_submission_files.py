@@ -192,6 +192,7 @@ def process_submission_file(filename, ligand_info, find_interactions=False):
             close_3, close_5 = None, None
             mf, hvy_mf, ref_hvy_mf, hvy_mf_ok = None, None, None, None
             mol_block = None
+            num_atoms = -1
 
             if mol:
                 mf = CalcMolFormula(mol)
