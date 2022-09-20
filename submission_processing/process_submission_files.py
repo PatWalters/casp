@@ -243,7 +243,7 @@ def get_rotation_matrix(submission, rot_df):
     return res
 
 
-def process_ligands():
+def process_ligands(find_interactions=True):
     rotation_df = build_rotation_dataframe()
     rotation_df.set_index("name",inplace=True)
     df_list = []
@@ -263,7 +263,7 @@ def process_ligands():
         sub_file_list = sorted(glob(dirpath + f"/{target_name}*"))
         for sub_filepath in tqdm(sub_file_list, desc=dirpath):
             data_path, sub_filename = os.path.split(sub_filepath)
-            row_df = pd.DataFrame(process_submission_file(sub_filepath, lig_info, find_interactions=False),
+            row_df = pd.DataFrame(process_submission_file(sub_filepath, lig_info, find_interactions=find_interactions),
                                   columns=cols)
             row_df['target'] = target_name
             row_df['submission'] = sub_filename
