@@ -14,11 +14,14 @@ from rdkit.Chem.rdMolDescriptors import CalcMolFormula
 from rdkit import Chem
 from rdkit.Chem import AllChem
 import useful_rdkit_utils as uru
+from fix_submission_molecules import fix_f3s
 
 home = str(Path.home())
 LIGAND_DIR = f"{home}/DATA/CASP/FINAL/LIGAND"
 SUBMISSION_DIR = f"{home}/DATA/CASP/FINAL/SUBMISSIONS"
 SOLUTIONS_DIR = f"{home}/DATA/CASP/FINAL/SOLUTIONS"
+
+T1181_OAA_SMILES = "CC(=O)N[C@H]1[C@@H](O)O[C@H](CO[C@H]2O[C@H](CO)[C@@H](O[C@@H]3O[C@H](C=O)[C@@H](O[C@@H]4O[C@H](CO[C@H]5O[C@H](CO)[C@@H](O[C@@H]6OC(C=O)=C[C@H](O)[C@H]6O)[C@H](O)[C@H]5NC(C)=O)[C@@H](O)[C@H](O)[C@H]4NC(C)=O)[C@H](O)[C@H]3O)[C@H](O)[C@H]2NC(C)=O)[C@@H](O)[C@@H]1O"
 
 
 def find_close_residues(prot, chid, resnum, resname, cutoff):
@@ -57,6 +60,11 @@ def process_ref_protein(filename):
             if res_name in lig_name_set:
                 ref_smiles, ref_name, res_relevant, ref_hvy_mf = lig_info.lookup_ligand_info_by_name(res_name)
                 ligand_rd_mol = get_ligand_rdmol(prot_ag, chain_id, res_name, res_num)
+                if res_name == "F3S":
+                    ligand_rd_mol = fix_f3s(ligand_rd_mol)
+                if res_name == "OAA":
+                    tmplt_mol = Chem.MolFromSmiles(T1181_OAA_SMILES)
+                    ligand_rd_mol = AllChem.AssignBondOrdersFromTemplate(tmplt_mol, ligand_rd_mol)
                 ligand_mf = CalcMolFormula(ligand_rd_mol)
                 ref_mol = Chem.MolFromSmiles(ref_smiles)
                 if ref_mol.GetNumBonds() > 0:

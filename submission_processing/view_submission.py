@@ -52,3 +52,4 @@ for idx, row in sub_df.iterrows():
     transform_molecule(mol, tm)
     writer.write(mol)
 writer.close()
+print("pymol ref.pdb sub_prot.pdb sub_lig.sdf")

@@ -15,7 +15,7 @@ from prody import confProDy
 from pathlib import Path
 from tqdm.auto import tqdm
 import json
-from read_rotation_matrices import build_rotation_dataaframe
+from read_rotation_matrices import build_rotation_dataframe
 
 home = str(Path.home())
 LIGAND_DIR = f"/{home}/DATA/CASP/FINAL/LIGAND"
@@ -244,7 +244,7 @@ def get_rotation_matrix(submission, rot_df):
 
 
 def process_ligands():
-    rotation_df = build_rotation_dataaframe()
+    rotation_df = build_rotation_dataframe()
     rotation_df.set_index("name",inplace=True)
     df_list = []
 
@@ -285,8 +285,8 @@ def debug():
             "mol_zmiles", "zmiles",
             "bad_ligand", "bad_protein", "mol_status", "bonds_ok", "ligand_atmgrp_ok", "len_protein",
             "protein_atmgrp_ok",
-            "close_str_3", "close_str_5"]
-    entry = "H1114LG132_1"
+            "close_3", "close_5", "mol_block","num_atoms"]
+    entry = "H1114LG119_1"
     stub = entry[0:5]
     lig_info = LigandInfo(f"{LIGAND_DIR}/{stub}_lig.txt")
     res = process_submission_file(f"{SUBMISSION_DIR}/{stub}/{entry}", lig_info)
@@ -294,5 +294,5 @@ def debug():
 
 
 if __name__ == "__main__":
-    # debug()
-    process_ligands()
+    debug()
+    #process_ligands()

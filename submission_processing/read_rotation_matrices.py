@@ -60,7 +60,7 @@ def read_mmalign_matrix_files(dirname):
     return mat_df
 
 
-def build_rotation_dataaframe():
+def build_rotation_dataframe():
     df_list = []
     for filename in sorted(glob(f"{ROTATION_DIR}/*.rot")):
         basename = PurePath(filename).parts[-1]

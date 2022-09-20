@@ -15,6 +15,7 @@ import useful_rdkit_utils as uru
 from spyrmsd import rmsd, molecule
 from spyrmsd.optional import rdkit as rd
 from spyrmsd.exceptions import NonIsomorphicGraphs
+from fix_submission_molecules import fix_mq7, fix_oaa
 
 MAX_RMSD = 10000.0
 
@@ -172,13 +173,20 @@ def evaluate_ligand_overlap(protein_df, ligand_df):
         try:
             ref_mol_list = prot_lig_dict[ligand_name]
             ligand_mol_block = ligand_rec.mol_block
+            ref_tmplt_mol = Chem.MolFromSmiles(ligand_rec.zmiles)
             ligand_mol = Chem.MolFromMolBlock(ligand_mol_block)
+            #ligand_mol = AllChem.AssignBondOrdersFromTemplate(ref_tmplt_mol, ligand_mol)
+            if ligand_name == "MQ7":
+                ligand_mol = fix_mq7(ligand_mol)
+            if ligand_name == "OAA":
+                ligand_mol = fix_oaa(ligand_mol)
             rmat = json.loads(ligand_rec.rotation_matrix)
             transform_molecule(ligand_mol, rmat)
             best_fms_val = best_featuremap_score(ligand_mol, ref_mol_list, featuremap_score)
             best_rms_val = best_rms(ligand_mol, ref_mol_list)
             best_shape_score = best_shape_tanimoto(ligand_mol, ref_mol_list)
-        except (TypeError, KeyError, AssertionError, NonIsomorphicGraphs) as e:
+        except (TypeError, KeyError, AssertionError, NonIsomorphicGraphs, ValueError) as e:
+            print(e,Chem.MolToSmiles(ref_tmplt_mol),Chem.MolToSmiles(ligand_mol))
             best_fms_val = -1.0
             best_rms_val = MAX_RMSD
             best_shape_score = -1.0
@@ -190,13 +198,13 @@ def evaluate_ligand_overlap(protein_df, ligand_df):
 
 def main():
     protein_ref_df = pd.read_csv("proteins_ok.csv")
-    ligand_df = pd.read_csv("2022_09_18_casp_ligands_with_mols.csv")
+    ligand_df = pd.read_csv("2022_09_19_casp_ligands_with_mols.csv")
     protein_target_list = protein_ref_df.target.unique()
 
     df_list = []
     for target in ligand_df.target.unique():
         df_ligand = ligand_df.query("target == @target").copy()
-        # df_ligand = ligand_df.query("submission == @submission_id and pose_num == 1").copy()
+        #df_ligand = ligand_df.query("submission == @submission_id and pose_num == 1").copy()
         target_protein_list = [x for x in protein_target_list if x.startswith(target)]
         for tp in target_protein_list:
             df_protein = protein_ref_df.query("target == @tp")
@@ -214,8 +222,41 @@ def main():
             df_ligand['fms'] = fms_list
         df_list.append(df_ligand)
     combo_df = pd.concat(df_list)
-    combo_df.to_csv("2022_09_18_casp_ligand_eval.csv", index=False)
+    # combo_df.to_csv("2022_09_18_casp_ligand_eval.csv", index=False)
+
+
+def debug():
+    #submission_id = 'H1114LG119_1'
+    submission_id = 'H1114LG086_2'
+    target_name = submission_id.split('LG')[0]
+    protein_ref_df = pd.read_csv("proteins_ok.csv")
+    ligand_df = pd.read_csv("2022_09_19_casp_ligands_with_mols.csv")
+    protein_target_list = protein_ref_df.target.unique()
+
+    df_list = []
+    for target in [target_name]:
+        df_ligand = ligand_df.query("target == @target").copy()
+        #df_ligand = ligand_df.query("submission == @submission_id and pose_num == 1").copy()
+        target_protein_list = [x for x in protein_target_list if x.startswith(target)]
+        for tp in target_protein_list:
+            df_protein = protein_ref_df.query("target == @tp")
+            print(tp, len(df_ligand), len(df_protein))
+            close_3_list = evaluate_site_overlap(df_protein, df_ligand, "close_3")
+            close_5_list = evaluate_site_overlap(df_protein, df_ligand, "close_5")
+            # print(target, len(df_ligand), len(close_3_list), len(close_5_list))
+            # rms_list, fms_list = evaluate_ligand_overlap(df_protein, df_ligand)
+            shape_tanimoto_list, fms_list, rms_list = evaluate_ligand_overlap(df_protein, df_ligand)
+            df_ligand['ref_protein'] = tp
+            df_ligand['close_3'] = close_3_list
+            df_ligand['close_5'] = close_5_list
+            df_ligand['shape_tanimoto'] = shape_tanimoto_list
+            df_ligand['rmsd'] = rms_list
+            df_ligand['fms'] = fms_list
+        df_list.append(df_ligand)
+    combo_df = pd.concat(df_list)
+    combo_df.to_csv("debug_eval.csv", index=False)
 
 
 if __name__ == "__main__":
-    main()
+    # main()
+    debug()
