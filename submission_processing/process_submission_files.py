@@ -273,11 +273,11 @@ def process_ligands(find_interactions=True):
             combo_df = pd.concat(df_list)
             group_re = re.compile("LG([0-9]+)_")
             combo_df['group'] = [group_re.findall(x)[0] for x in combo_df.submission.values]
-            combo_df.to_csv("casp_ligands_with_mols.csv", index=False)
+            combo_df.to_csv("2022_10_01_casp_ligands_with_mols.csv", index=False)
             # return combo_df
 
 
-def debug():
+def debug(find_interactions=True):
     cols = ["num_model_lines", "pose_id", "pose_num",
             "ligand_id", "ligand_name", "ligand_number", "corrected_name",
             "relevant",
@@ -289,10 +289,10 @@ def debug():
     entry = "H1114LG119_1"
     stub = entry[0:5]
     lig_info = LigandInfo(f"{LIGAND_DIR}/{stub}_lig.txt")
-    res = process_submission_file(f"{SUBMISSION_DIR}/{stub}/{entry}", lig_info)
-    print(pd.DataFrame(res, columns=cols))
+    res = process_submission_file(f"{SUBMISSION_DIR}/{stub}/{entry}", lig_info, find_interactions=find_interactions)
+    pd.DataFrame(res, columns=cols).to_csv("debug_sub.csv",index=False)
 
 
 if __name__ == "__main__":
-    debug()
-    #process_ligands()
+    #debug()
+    process_ligands()

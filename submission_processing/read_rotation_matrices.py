@@ -16,6 +16,7 @@ SOLUTIONS_DIR = f"{home}/DATA/CASP/FINAL/SOLUTIONS"
 
 def parse_lga_rotation_matrix(lines):
     name = lines[0].strip()
+    name = name.split(".")[0]
     lst = []
     for line in lines[1:4]:
         toks = line.split()
@@ -49,8 +50,9 @@ def parse_mmalign_rotation_matrix(lines):
 def read_mmalign_matrix_files(dirname):
     mat_list = []
     dir_base = PurePath(dirname).parts[-1]
-    for filename in glob(f"{dirname}/H*.ROT"):
+    for filename in glob(f"{dirname}/*.ROT"):
         basename = PurePath(filename).parts[-1]
+        basename = basename.replace("o.ROT",".ROT")
         name = basename.replace(".ROT", "")
         with open(filename) as ifs:
             lines = ifs.readlines()
@@ -62,13 +64,15 @@ def read_mmalign_matrix_files(dirname):
 
 def build_rotation_dataframe():
     df_list = []
-    for filename in sorted(glob(f"{ROTATION_DIR}/*.rot")):
+    monomer_list = sorted(glob(f"{ROTATION_DIR}/MONOMER_1/*.rot")) + sorted(glob(f"{ROTATION_DIR}/MONOMER_2/*.rot"))
+    for filename in monomer_list:
         basename = PurePath(filename).parts[-1]
         target = basename.replace(".rot", "")
         df = read_lga_matrix_file(filename)
         df["target"] = target
         df_list.append(df)
-    for dirname in glob(f"{ROTATION_DIR}/ROT/H*"):
+    multimer_list = glob(f"{ROTATION_DIR}/MULTIMER_1/H*") + glob(f"{ROTATION_DIR}/MULTIMER_2/H*")
+    for dirname in multimer_list:
         target = PurePath(dirname).parts[-1]
         df = read_mmalign_matrix_files(dirname)
         df["target"] = target

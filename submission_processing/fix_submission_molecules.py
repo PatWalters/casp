@@ -12,12 +12,14 @@ def trim_molecule(mol, ref_mol):
 
 
 def fix_oaa(mol):
+    # fix OAA in T1181
     oaa_smiles = 'CC(=O)N[C@H]1[C@@H](O)O[C@H](CO[C@H]2O[C@H](CO)[C@@H](O[C@@H]3O[C@H](C=O)[C@@H](O[C@@H]4O[C@H](CO[C@H]5O[C@H](CO)[C@@H](O[C@@H]6OC(C=O)=C[C@H](O)[C@H]6O)[C@H](O)[C@H]5NC(C)=O)[C@@H](O)[C@H](O)[C@H]4NC(C)=O)[C@H](O)[C@H]3O)[C@H](O)[C@H]2NC(C)=O)[C@@H](O)[C@@H]1O'
     oaa_tmplt = Chem.MolFromSmiles(oaa_smiles)
     return trim_molecule(mol, oaa_tmplt)
 
 
 def fix_mq7(mol):
+    # fix MQ7 in H1114
     rw_mol = Chem.RWMol(mol)
     ref_smiles = "CC(C)=CCC\C(C)=C\CC\C(C)=C\CC1=C(C)C(=O)c2ccccc2C1=O"
     ref_mol = Chem.MolFromSmiles(ref_smiles)
@@ -26,6 +28,7 @@ def fix_mq7(mol):
 
 
 def fix_f3s(pdb_mol):
+    # fix F3S in H1114
     new_mol = Chem.RWMol(pdb_mol)
     for bnd in pdb_mol.GetBonds():
         bgn_atm = bnd.GetBeginAtom()
