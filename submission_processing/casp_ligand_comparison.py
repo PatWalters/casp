@@ -201,7 +201,7 @@ def main():
         print(f"usage: {sys.argv[0]} ref_proteins.csv ligands.csv")
         sys.exit(0)
     protein_ref_df = pd.read_csv(sys.argv[1])
-    ligand_df = pd.read_csv(sys.argv[1]
+    ligand_df = pd.read_csv(sys.argv[2])
     protein_target_list = protein_ref_df.target.unique()
 
     df_list = []
