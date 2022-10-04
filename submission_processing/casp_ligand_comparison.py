@@ -19,7 +19,6 @@ from fix_submission_molecules import fix_mq7, fix_oaa
 
 MAX_RMSD = 10000.0
 
-
 def spyrmsd(rd_mol, rd_ref):
     mol = rd.to_molecule(rd_mol)
     coords = mol.coordinates
