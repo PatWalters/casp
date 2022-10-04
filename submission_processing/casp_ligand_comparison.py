@@ -168,6 +168,7 @@ def evaluate_ligand_overlap(protein_df, ligand_df):
     rms_list = []
     shape_tanimoto_list = []
     ref_tmplt_mol = Chem.Mol()
+    ligand_mol = Chem.Mol()
     for idx, ligand_rec in tqdm(ligand_df.iterrows(), total=len(ligand_df)):
         ligand_name = ligand_rec.corrected_name
         try:
