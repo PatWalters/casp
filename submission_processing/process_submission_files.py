@@ -286,13 +286,13 @@ def debug(find_interactions=True):
             "bad_ligand", "bad_protein", "mol_status", "bonds_ok", "ligand_atmgrp_ok", "len_protein",
             "protein_atmgrp_ok",
             "close_3", "close_5", "mol_block","num_atoms"]
-    entry = "H1114LG119_1"
-    stub = entry[0:5]
+    entry = "T1127v2LG444_1"
+    stub = entry.split("LG")[0]
     lig_info = LigandInfo(f"{LIGAND_DIR}/{stub}_lig.txt")
     res = process_submission_file(f"{SUBMISSION_DIR}/{stub}/{entry}", lig_info, find_interactions=find_interactions)
     pd.DataFrame(res, columns=cols).to_csv("debug_sub.csv",index=False)
 
 
 if __name__ == "__main__":
-    #debug()
-    process_ligands()
+    debug()
+    #process_ligands()

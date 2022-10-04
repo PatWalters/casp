@@ -19,7 +19,7 @@ from fix_submission_molecules import fix_f3s
 home = str(Path.home())
 LIGAND_DIR = f"{home}/DATA/CASP/FINAL/LIGAND"
 SUBMISSION_DIR = f"{home}/DATA/CASP/FINAL/SUBMISSIONS"
-SOLUTIONS_DIR = f"{home}/DATA/CASP/FINAL/SOLUTIONS"
+SOLUTIONS_DIR = f"{home}/DATA/CASP/FINAL/XR/SOLUTIONS"
 
 T1181_OAA_SMILES = "CC(=O)N[C@H]1[C@@H](O)O[C@H](CO[C@H]2O[C@H](CO)[C@@H](O[C@@H]3O[C@H](C=O)[C@@H](O[C@@H]4O[C@H](CO[C@H]5O[C@H](CO)[C@@H](O[C@@H]6OC(C=O)=C[C@H](O)[C@H]6O)[C@H](O)[C@H]5NC(C)=O)[C@@H](O)[C@H](O)[C@H]4NC(C)=O)[C@H](O)[C@H]3O)[C@H](O)[C@H]2NC(C)=O)[C@@H](O)[C@@H]1O"
 
@@ -99,10 +99,10 @@ def main():
         check_list.append(ref_res)
         df_list.append(ref_df)
     combo_df = pd.concat(df_list)
-    combo_df.to_csv("proteins_ok.csv", index=False)
+    combo_df.to_csv("2022_10_04_proteins_ok.csv", index=False)
     check_df = pd.DataFrame(check_list, columns=["Target", "Num_PDB_Ligands", "Num_Provided_ligands", "PDB_Ligands",
                                                  "Provided_Ligands", "OK"])
-    check_df.to_csv("check_proteins.csv", index=False)
+    check_df.to_csv("2022_10_04_check_proteins.csv", index=False)
 
 
 if __name__ == "__main__":
