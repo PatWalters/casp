@@ -197,8 +197,11 @@ def evaluate_ligand_overlap(protein_df, ligand_df):
 
 
 def main():
-    protein_ref_df = pd.read_csv("proteins_ok.csv")
-    ligand_df = pd.read_csv("2022_10_01_casp_ligands_with_mols.csv")
+    if len(sys.argv) != 3:
+        print(f"usage: {sys.argv[0]} ref_proteins.csv ligands.csv")
+        sys.exit(0)
+    protein_ref_df = pd.read_csv(sys.argv[1])
+    ligand_df = pd.read_csv(sys.argv[1]
     protein_target_list = protein_ref_df.target.unique()
 
     df_list = []
