@@ -99,10 +99,10 @@ def main():
         check_list.append(ref_res)
         df_list.append(ref_df)
     combo_df = pd.concat(df_list)
-    combo_df.to_csv("2022_10_04_proteins_ok.csv", index=False)
+    combo_df.to_csv("2022_10_05_proteins_ok.csv", index=False)
     check_df = pd.DataFrame(check_list, columns=["Target", "Num_PDB_Ligands", "Num_Provided_ligands", "PDB_Ligands",
                                                  "Provided_Ligands", "OK"])
-    check_df.to_csv("2022_10_04_check_proteins.csv", index=False)
+    check_df.to_csv("2022_10_05_check_proteins.csv", index=False)
 
 
 if __name__ == "__main__":

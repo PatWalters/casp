@@ -226,7 +226,8 @@ def main():
             df_ligand['fms'] = fms_list
         df_list.append(df_ligand)
     combo_df = pd.concat(df_list)
-    combo_df.to_csv("2022_10_02_casp_ligand_eval.csv", index=False)
+    combo_df.to_csv("tmp.csv",index=False)
+    #combo_df.to_csv("2022_10_05_casp_ligand_eval.csv", index=False)
 
 
 def debug():
