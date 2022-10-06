@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -11,7 +13,7 @@ def compare_analyses(xr_file, pw_file, pdf_pages):
         xr_df = pd.read_csv(xr_file, low_memory=False)
         if "target_idsubmission_file" not in xr_df.columns:
             xr_df["target_idsubmission_file"] = xr_df.target_id + xr_df.submission_file
-        pw_df["target_idsubmission_file"] = pw_df.target + pw_df.submission
+        pw_df["target_idsubmission_file"] = pw_df.ref_protein + pw_df.submission
         pw_df = pw_df.query("(bad_protein == False) and (bad_ligand == False) and (relevant == 'Yes')")
         pw_df = pw_df.rename({"rmsd": "PW_RMSD"}, axis="columns")
         merge_df = pw_df.merge(xr_df, left_on=["target_idsubmission_file", "pose_num", "ligand_number"],
@@ -46,11 +48,11 @@ def main():
         for filename in sorted(glob("*.csv")):
             print(filename)
             res = compare_analyses(filename,
-                                   "/Users/pwalters/software/casp/submission_processing/2022_09_20_casp_ligand_eval.csv",
+                                   "/Users/pwalters/software/casp/submission_processing/tmp.csv",
                                    pdf_pages)
             if res is not None:
                 name = filename.split(".")[0]
                 print(name)
-                res.to_csv(f"../MERGE/{name}_merged.csv")
+                res.to_csv(f"./MERGE/{name}_merged.csv")
 
 main()

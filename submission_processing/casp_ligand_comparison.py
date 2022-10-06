@@ -16,6 +16,7 @@ from spyrmsd import rmsd, molecule
 from spyrmsd.optional import rdkit as rd
 from spyrmsd.exceptions import NonIsomorphicGraphs
 from fix_submission_molecules import fix_mq7, fix_oaa
+from oe_utils import best_rocs_scores
 
 MAX_RMSD = 10000.0
 
@@ -226,7 +227,7 @@ def main():
             df_ligand['fms'] = fms_list
         df_list.append(df_ligand)
     combo_df = pd.concat(df_list)
-    combo_df.to_csv("tmp.csv",index=False)
+    combo_df.to_csv("tmp2.csv",index=False)
     #combo_df.to_csv("2022_10_05_casp_ligand_eval.csv", index=False)
 
 
