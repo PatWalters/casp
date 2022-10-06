@@ -211,6 +211,7 @@ def main():
         df_ligand = ligand_df.query("target == @target").copy()
         #df_ligand = ligand_df.query("submission == @submission_id and pose_num == 1").copy()
         target_protein_list = [x for x in protein_target_list if x.startswith(target)]
+
         for tp in target_protein_list:
             df_protein = protein_ref_df.query("target == @tp")
             print(tp, len(df_ligand), len(df_protein))
@@ -225,9 +226,9 @@ def main():
             df_ligand['shape_tanimoto'] = shape_tanimoto_list
             df_ligand['rmsd'] = rms_list
             df_ligand['fms'] = fms_list
-        df_list.append(df_ligand)
+            df_list.append(df_ligand.copy())
     combo_df = pd.concat(df_list)
-    combo_df.to_csv("tmp2.csv",index=False)
+    combo_df.to_csv("tmp3.csv",index=False)
     #combo_df.to_csv("2022_10_05_casp_ligand_eval.csv", index=False)
 
 

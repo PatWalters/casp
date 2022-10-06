@@ -48,7 +48,7 @@ def main():
         for filename in sorted(glob("*.csv")):
             print(filename)
             res = compare_analyses(filename,
-                                   "/Users/pwalters/software/casp/submission_processing/tmp.csv",
+                                   "/Users/pwalters/software/casp/submission_processing/tmp2.csv",
                                    pdf_pages)
             if res is not None:
                 name = filename.split(".")[0]
